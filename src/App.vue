@@ -8,9 +8,9 @@
         <option v-for="(item, index) in city" :value="item.code" :key="index">{{ item.name }}</option>
       </select>
       &nbsp;
-      <select v-model="area_id">
+      <select v-model="area_id" @change="changeArea">
         <option value="0">选择区县</option>
-        <option v-for="(item, index) in areaList" :value="item" :key="index">{{ item }}</option>
+        <option v-for="(item, index) in areaList" :value="item.area_id" :key="index">{{ item.area_name }}</option>
       </select>
     </div>
   </div>
@@ -27,8 +27,19 @@ const city_id = ref('0')
 const area_id = ref('0')
 const areaList = ref([])
 const getCityList = async () => {
-  const res = await $get("/api/aj/getcitycode")
-  city.value = res.result.hotcity
+    area_id.value = '0'
+    const res = await $get("/api/aj/getcitycode")
+    city.value = res.result.hotcity
+}
+
+const changeArea = async () => {
+  if(area_id.value !== '0'){
+    const res = await $get("/api/at/shop",{
+      city_id:city_id.value,
+      area_id:area_id.value,
+    })
+    console.log(res)
+  }
 }
 
 const changeCity = async () => {
@@ -36,11 +47,13 @@ const changeCity = async () => {
   const res = await $get('/api/aj/get_area',{
     citycode: city_id.value
   })
-  for (const key in res.result) {
-    areaList.value.push(res.result[key])
-  }
-  console.log(areaList.value);
-  
+  areaList.value = Object.keys(res.result).map(item => {
+    return {
+      area_id:item,
+      area_name:res.result[item]
+    }
+  })
+  areaList.value
 }
 
 onMounted(() => {
@@ -73,7 +86,7 @@ onUnmounted(() => {
 </script>
 <style scoped>
 #container {
-  padding: 0px;
+  padding: 0;
   margin: 5px;
   box-sizing: border-box;
   width: 100%;
